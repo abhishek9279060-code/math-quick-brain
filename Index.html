@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Quick Brain</title>
+
+<!-- AdMob Script -->
+<script async 
+src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+crossorigin="anonymous"></script>
+
+<style>
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:linear-gradient(135deg,#001f3f,#003366);
+color:white;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+height:100vh;
+overflow:hidden;
+}
+
+.container{
+text-align:center;
+background:rgba(255,255,255,0.08);
+padding:25px;
+border-radius:20px;
+backdrop-filter:blur(10px);
+width:330px;
+box-shadow:0 0 25px rgba(0,150,255,0.4);
+}
+
+button{
+background:#007bff;
+border:none;
+color:white;
+padding:10px 18px;
+border-radius:10px;
+cursor:pointer;
+margin:6px;
+transition:0.3s;
+}
+
+button:hover{
+background:#00bfff;
+box-shadow:0 0 15px #00bfff;
+transform:scale(1.05);
+}
+
+input{
+padding:8px;
+border-radius:8px;
+border:none;
+margin-top:10px;
+text-align:center;
+width:80%;
+}
+
+.fade{animation:fadeIn 0.4s ease;}
+@keyframes fadeIn{
+from{opacity:0; transform:translateY(-10px);}
+to{opacity:1; transform:translateY(0);}
+}
+
+.levelUp{animation:zoom 0.4s ease;}
+@keyframes zoom{
+0%{transform:scale(1);}
+50%{transform:scale(1.2);}
+100%{transform:scale(1);}
+}
+
+.shake{animation:shake 0.3s;}
+@keyframes shake{
+0%{transform:translateX(0);}
+25%{transform:translateX(-6px);}
+50%{transform:translateX(6px);}
+75%{transform:translateX(-6px);}
+100%{transform:translateX(0);}
+}
+
+.particle{
+position:absolute;
+width:6px;
+height:6px;
+background:#00ffcc;
+border-radius:50%;
+animation:explode 0.8s forwards;
+}
+@keyframes explode{
+to{
+transform:translate(var(--x),var(--y));
+opacity:0;
+}
+}
+
+.popup{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.popup-content{
+background:#002b55;
+padding:20px;
+border-radius:15px;
+width:80%;
+max-width:300px;
+}
+
+.ad-banner{
+margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>🧠 Math Quick Brain</h1>
+
+<div id="startScreen">
+<button onclick="startGame()">Start Game</button>
+</div>
+
+<div id="gameScreen" style="display:none;">
+<h3 id="level">Level 1</h3>
+<h2 id="question">Question</h2>
+
+<input type="number" id="answer" placeholder="Your Answer">
+<br>
+<button onclick="checkAnswer()">Submit</button>
+<button onclick="toggleSound()" id="soundBtn">🔊 Sound ON</button>
+
+<p id="score">Score: 0</p>
+<button onclick="openPolicy()">Privacy Policy</button>
+</div>
+
+<div id="gameOver" style="display:none;">
+<h2>💀 Game Over</h2>
+<p id="finalScore"></p>
+<button onclick="restartGame()">Restart</button>
+</div>
+</div>
+
+<!-- Privacy Policy Popup -->
+<div class="popup" id="policyPopup">
+<div class="popup-content">
+<h3>Privacy Policy</h3>
+<p>This game may use AdMob ads. No personal data is stored. Ads may collect device data for better experience.</p>
+<button onclick="closePolicy()">Close</button>
+</div>
+</div>
+
+<!-- Banner Ad -->
+<div class="ad-banner">
+<ins class="adsbygoogle"
+style="display:block"
+data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+data-ad-slot="1234567890"
+data-ad-format="auto"
+data-full-width-responsive="true"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+
+<script>
+let score=0,level=1,correctAnswer=0,wrong=0;
+let audioCtx;
+let soundEnabled=true;
+
+function playTone(freq,duration,type="sine"){
+if(!soundEnabled) return;
+const osc=audioCtx.createOscillator();
+const gain=audioCtx.createGain();
+osc.type=type;
+osc.frequency.value=freq;
+osc.connect(gain);
+gain.connect(audioCtx.destination);
+gain.gain.setValueAtTime(0.3,audioCtx.currentTime);
+osc.start();
+osc.stop(audioCtx.currentTime+duration);
+}
+
+function startGame(){
+audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+document.getElementById("startScreen").style.display="none";
+document.getElementById("gameScreen").style.display="block";
+generateQuestion();
+}
+
+function generateQuestion(){
+let max=10+level*5;
+let n1=Math.floor(Math.random()*max);
+let n2=Math.floor(Math.random()*max);
+correctAnswer=n1+n2;
+
+let q=document.getElementById("question");
+q.innerText=n1+" + "+n2;
+q.classList.remove("fade");
+void q.offsetWidth;
+q.classList.add("fade");
+}
+
+function checkAnswer(){
+let user=parseInt(document.getElementById("answer").value);
+
+if(user===correctAnswer){
+playTone(600,0.15,"triangle");
+playTone(800,0.15,"triangle");
+score+=10;
+
+if(score%50===0){
+level++;
+let lvl=document.getElementById("level");
+lvl.classList.add("levelUp");
+setTimeout(()=>lvl.classList.remove("levelUp"),400);
+}
+
+createParticles();
+generateQuestion();
+}else{
+playTone(120,0.4,"sawtooth");
+document.querySelector(".container").classList.add("shake");
+setTimeout(()=>document.querySelector(".container").classList.remove("shake"),300);
+wrong++;
+if(wrong>=3){ endGame(); return;}
+}
+
+document.getElementById("score").innerText="Score: "+score;
+document.getElementById("level").innerText="Level "+level;
+document.getElementById("answer").value="";
+}
+
+function endGame(){
+playTone(80,0.6,"square");
+document.getElementById("gameScreen").style.display="none";
+document.getElementById("gameOver").style.display="block";
+document.getElementById("finalScore").innerText="Your Score: "+score;
+showInterstitialAd();
+}
+
+function restartGame(){ location.reload(); }
+
+function toggleSound(){
+soundEnabled=!soundEnabled;
+document.getElementById("soundBtn").innerText=
+soundEnabled?"🔊 Sound ON":"🔇 Sound OFF";
+}
+
+function openPolicy(){
+document.getElementById("policyPopup").style.display="flex";
+}
+
+function closePolicy(){
+document.getElementById("policyPopup").style.display="none";
+}
+
+function showInterstitialAd(){
+console.log("Interstitial Triggered");
+}
+
+function createParticles(){
+for(let i=0;i<15;i++){
+let p=document.createElement("div");
+p.className="particle";
+p.style.left="50%";
+p.style.top="50%";
+p.style.setProperty('--x',(Math.random()*200-100)+'px');
+p.style.setProperty('--y',(Math.random()*200-100)+'px');
+document.body.appendChild(p);
+setTimeout(()=>p.remove(),800);
+}
+}
+</script>
+
+</body>
+  </html>
